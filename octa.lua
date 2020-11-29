@@ -1,9 +1,11 @@
--- scriptname: octa
--- v0.0.1 @sushi_and_sushi
+-- octa
+-- simple drone synthesizer
+-- v0.01 @sushi_and_sushi
 --
 -- octa engine
--- KEY 2 toggle sound on/off
--- KEY 3 toggle chord tone
+-- KEY 2 toggle back oscillator
+-- KEY 3 toggle next oscillator
+-- ENC 3 Volume control for the selected oscillator
 
 engine.name = 'Octa'
 
