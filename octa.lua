@@ -1,6 +1,6 @@
 -- octa
 -- simple drone synthesizer
--- v0.01 @sushi_and_sushi
+-- v1.0.0 @sushi_and_sushi
 --
 -- octa engine
 -- KEY 2 toggle back oscillator
@@ -17,15 +17,15 @@ local screen_dirty = true
 
 local tabs
 local slider = {
-    UI.Slider.new(6, 18, 4, 44, 1, 0, 1, {0.84}),
-    UI.Slider.new(22, 18, 4, 44, 1, 0, 1, {0.84}),
-    UI.Slider.new(38, 18, 4, 44, 1, 0, 1, {0.84}),
-    UI.Slider.new(54, 18, 4, 44, 1, 0, 1, {0.84}),
-    UI.Slider.new(70, 18, 4, 44, 1, 0, 1, {0.84}),
-    UI.Slider.new(86, 18, 4, 44, 1, 0, 1, {0.84}),
-    UI.Slider.new(102, 18, 4, 44, 1, 0, 1, {0.84}),
-    UI.Slider.new(118, 18, 4, 44, 1, 0, 1, {0.84})
-  }
+  UI.Slider.new(7, 18, 4, 44, 0, 0, 1, {0.84}),
+  UI.Slider.new(23, 18, 4, 44, 0, 0, 1, {0.84}),
+  UI.Slider.new(38, 18, 4, 44, 0, 0, 1, {0.84}),
+  UI.Slider.new(54, 18, 4, 44, 0, 0, 1, {0.84}),
+  UI.Slider.new(70, 18, 4, 44, 0, 0, 1, {0.84}),
+  UI.Slider.new(86, 18, 4, 44, 0, 0, 1, {0.84}),
+  UI.Slider.new(101, 18, 4, 44, 0, 0, 1, {0.84}),
+  UI.Slider.new(117, 18, 4, 44, 0, 0, 1, {0.84})
+}
 
 function midi_to_hz(note)
   local hz = (440 / 32) * (2 ^ ((note - 9) / 12))
@@ -48,13 +48,41 @@ function assign_param(assign_type, num, value)
   end
 end
 
+function load_hz_list(index, hz_value)
+  hz_list = {
+    engine.osc1_hz,
+    engine.osc2_hz,
+    engine.osc3_hz,
+    engine.osc4_hz,
+    engine.osc5_hz,
+    engine.osc6_hz,
+    engine.osc7_hz,
+    engine.osc8_hz
+  }
+  hz_list[index](hz_value)
+end
+
+function load_amp_list(index, amp_value)
+  amp_list = {
+    engine.osc1_amp,
+    engine.osc2_amp,
+    engine.osc3_amp,
+    engine.osc4_amp,
+    engine.osc5_amp,
+    engine.osc6_amp,
+    engine.osc7_amp,
+    engine.osc8_amp
+  }
+  amp_list[index](amp_value/63)
+end
+
 function init()
   screen.aa(1)
-  
+
   -- Init UI
   tabs = UI.Tabs.new(1, {1,2,3,4,5,6,7,8})
 
-  for i=1,8 do
+  for i = 1,8 do
     slider[i].active = false
   end
 
@@ -66,70 +94,38 @@ function init()
     end
   end
   screen_refresh_metro:start(1 / SCREEN_FRAMERATE)
-  
+
   -- parameter
-  params:add_separator()
-  params:add {type="number", id="cemitone", name="cemitone", min=-64, max=64, default=0,
-  action=function(value) engine.cemitone(value) end}
-  
-  params:add_separator()
-  params:add {type="number", id="osc1_hz", name="Osc1 hz", min=0, default=220,
-  action=function(value) engine.osc1_hz(value) end}
-  params:add_control("osc1_amp", "Osc1 Volume", controlspec.UNIPOLAR)
-  params:set_action("osc1_amp", function(value) engine.osc1_amp(value/127) end)
-  params:set("osc1_amp", 1)
-  --params:add {type="number", id="osc1_type", name="Osc1 Type", min=0, max=3, default=0,
-  --action=function(value) engine.osc1_type(value) end}
-  
-  params:add_separator()
-  params:add {type="number", id="osc2_hz", name="Osc2 hz", min=0, default=220,
-  action=function(value) engine.osc2_hz(value) end}
-  params:add_control("osc2_amp", "Osc2 Volume", controlspec.UNIPOLAR)
-  params:set_action("osc2_amp", function(value) engine.osc2_amp(value/127) end)
-  params:set("osc2_amp", 1)
+  params:add_separator("o c t a")
 
-  params:add_separator()
-  params:add {type="number", id="osc3_hz", name="Osc3 hz", min=0, default=220,
-  action=function(value) engine.osc3_hz(value) end}
-  params:add_control("osc3_amp", "Osc3 Volume", controlspec.UNIPOLAR)
-  params:set_action("osc3_amp", function(value) engine.osc3_amp(value/127) end)
-  params:set("osc3_amp", 1)
+  params:add {type="number", id="cemitone", name="Cemitone", min=-64, max=64, default=0, action=function(value) engine.cemitone(value) end}
 
-  params:add_separator()
-  params:add {type="number", id="osc4_hz", name="Osc4 hz", min=0, default=220,
-  action=function(value) engine.osc4_hz(value) end}
-  params:add_control("osc4_amp", "Osc4 Volume", controlspec.UNIPOLAR)
-  params:set_action("osc4_amp", function(value) engine.osc4_amp(value/127) end)
-  params:set("osc4_amp", 1)
+  dest = {"192.168.", 9000} -- init port
+  params:add_group("Hz setup",24)
+  for i = 1,8 do
+    params:add_separator(i)
+    params:add {type="number", id="osc"..i.."_hz", name="Osc"..i.." hz", min=0, default=220, action=function(value) load_hz_list(i, value) end}
+    params:add_control("osc"..i.."_amp", "Osc"..i.." Volume", controlspec.UNIPOLAR)
+    params:set_action("osc"..i.."_amp", function(value)
+      load_amp_list(i, value)
+      osc.send(dest, "/volume "..i, {value})
+      end)
+    params:set("osc"..i.."_amp", 0)
+  end
+    --params:add {type="number", id="osc1_type", name="Osc1 Type", min=0, max=3, default=0,
+    --action=function(value) engine.osc1_type(value) end}
 
-  params:add_separator()
-  params:add {type="number", id="osc5_hz", name="Osc5 hz", min=0, default=220,
-  action=function(value) engine.osc5_hz(value) end}
-  params:add_control("osc5_amp", "Osc5 Volume", controlspec.UNIPOLAR)
-  params:set_action("osc5_amp", function(value) engine.osc5_amp(value/127) end)
-  params:set("osc5_amp", 1)
+  params:add_group("OSC setup",3)
+  params:add_text("osc_IP", "OSC IP", "192.168.")
+  params:set_action("osc_IP", function() dest = {tostring(params:get("osc_IP")), tonumber(params:get("osc_port"))} end)
+  params:add_text("osc_port", "OSC port", "9000")
+  params:set_action("osc_port", function() dest = {tostring(params:get("osc_IP")), tonumber(params:get("osc_port"))} end)
+  params:add{type = "trigger", id = "refresh_osc", name = "refresh OSC [K3]", action = function()
+    params:set("osc_IP","none")
+    params:set("osc_port","none")
+    osc_communication = false
+  end}
 
-  params:add_separator()
-  params:add {type="number", id="osc6_hz", name="Osc6 hz", min=0, default=220,
-  action=function(value) engine.osc6_hz(value) end}
-  params:add_control("osc6_amp", "Osc6 Volume", controlspec.UNIPOLAR)
-  params:set_action("osc6_amp", function(value) engine.osc6_amp(value/127) end)
-  params:set("osc6_amp", 1)
-
-  params:add_separator()
-  params:add {type="number", id="osc7_hz", name="Osc7 hz", min=0, default=220,
-  action=function(value) engine.osc7_hz(value) end}
-  params:add_control("osc7_amp", "Osc7 Volume", controlspec.UNIPOLAR)
-  params:set_action("osc7_amp", function(value) engine.osc7_amp(value/127) end)
-  params:set("osc7_amp", 1)
-
-  params:add_separator()
-  params:add {type="number", id="osc8_hz", name="Osc8 hz", min=0, default=220,
-  action=function(value) engine.osc8_hz(value) end}
-  params:add_control("osc8_amp", "Osc8 Volume", controlspec.UNIPOLAR)
-  params:set_action("osc8_amp", function(value) engine.osc8_amp(value/127) end)
-  params:set("osc8_amp", 1)
-  
   -- control settigns
   m = midi.connect(1)
 
@@ -139,12 +135,12 @@ function init()
   voice = 0
   f = 100
   cemitone = 0
-  
+
   choose_num = {}
   for i = 0, 120 do
     choose_num[i] = 0
   end
-  
+
   m.event = function(data)
     local d = midi.to_msg(data)
 
@@ -159,7 +155,7 @@ function init()
         voice = voice - 1
       end
     end
-    
+
     for i = 0,120 do
       if d.type == "note_on" and d.note == i then
         print("note " .. i .. " on.")
@@ -192,7 +188,7 @@ function init()
         print("choose number " .. choose_num[i])
         print(voice .. " voices.")
       end
-      
+
       if d.type == "note_off" and d.note == i then
         print("note " .. i .. " off.")
         if choose_num[i] == 1 then
@@ -221,6 +217,12 @@ function init()
 end
 
 function osc_in(path, args, from)
+  if osc_communication ~= true then
+    params:set("osc_IP",from[1])
+    params:set("osc_port",from[2])
+    osc_communication = true
+  end
+
   for i=1,8 do
     if path == "/volume " .. i then
       assign_param("amp", i, args[1])
@@ -229,10 +231,10 @@ function osc_in(path, args, from)
     if path == "/hz " .. i then
       assign_param("hz", i, args[1]+cemitone)
     end
-    if path == "/pan " .. i then
-      engine.set("Pan" .. i .. ".Position", args[1])
-      print(args[1])
-    end
+    -- if path == "/pan " .. i then
+    --   engine.set("Pan" .. i .. ".Position", args[1])
+    --   print(args[1])
+    -- end
     if path == "/group_a" and i <= 4 then
       assign_param("amp", i, args[1])
       slider[i]:set_value(args[1])
@@ -260,7 +262,7 @@ function enc(n, delta)
       end
     end
   end
-  
+
   screen_dirty = true
   redraw()
 end
@@ -272,11 +274,11 @@ function key(n, z)
   elseif n == 2 and z == 1 then
     tabs:set_index_delta(-1, true)
   end
-  
+
   for i=1,8 do
     slider[i].active = tabs.index == i
   end
-  
+
   screen_dirty = true
   redraw()
 end
@@ -286,10 +288,10 @@ end
 function redraw()
   screen.clear()
   tabs:redraw()
-  
+
   for i=1,8 do
     slider[i]:redraw()
   end
-  
+
   screen.update()
 end
