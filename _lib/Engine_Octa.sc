@@ -84,7 +84,7 @@ Engine_Octa : CroneEngine {
 			synth1.set(\cemitone, msg[1]);
 			synth2.set(\cemitone, msg[1]);
 			synth3.set(\cemitone, msg[1]);
-      synth4.set(\cemitone, msg[1]);
+      		synth4.set(\cemitone, msg[1]);
 			synth5.set(\cemitone, msg[1]);
 			synth6.set(\cemitone, msg[1]);
 			synth7.set(\cemitone, msg[1]);
